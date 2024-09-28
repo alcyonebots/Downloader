@@ -28,7 +28,7 @@ def start(update: Update, context: CallbackContext) -> None:
     keyboard = [
         [
             InlineKeyboardButton("Join Channel", url=f"https://t.me/{CHANNEL_USERNAME[1:]}"),
-            InlineKeyboardButton("Join Group", url=f"https://t.me/{GROUP_USERNAME[1:]}")
+            InlineKeyboardButton("Join Support", url=f"https://t.me/{GROUP_USERNAME[1:]}")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -38,7 +38,7 @@ def start(update: Update, context: CallbackContext) -> None:
         reply_markup=reply_markup
     )
 
-def check_membership(update: Update) -> bool:
+def check_membership(update: Update, context: CallbackContext) -> bool:
     user_id = update.message.from_user.id
     chat_id_group = update.message.chat.id
     
@@ -59,7 +59,7 @@ def check_membership(update: Update) -> bool:
     return True
 
 def handle_message(update: Update, context: CallbackContext) -> None:
-    if not check_membership(update):
+    if not check_membership(update, context):  # Pass context here
         update.message.reply_text(
             "𝗣𝗹𝗲𝗮𝘀𝗲 𝗺𝗮𝗸𝗲 𝘀𝘂𝗿𝗲 𝘁𝗵𝗮𝘁 𝘆𝗼𝘂 𝗵𝗮𝘃𝗲 𝗷𝗼𝗶𝗻𝗲𝗱 𝗯𝗼𝘁 𝗴𝗿𝗼𝘂𝗽 𝗮𝗻𝗱 𝗰𝗵𝗮𝗻𝗻𝗲𝗹 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗯𝗼𝘁."
         )
