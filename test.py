@@ -1,5 +1,6 @@
 import os
 import yt_dlp
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.error import BadRequest
@@ -70,5 +71,14 @@ async def main():
 if __name__ == '__main__':
     if not os.path.exists('downloads'):
         os.makedirs('downloads')  # Create a directory to save downloaded videos
-    import asyncio
-    asyncio.run(main())
+
+    # Check if an event loop is already running
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+    except RuntimeError as e:
+        if str(e) == 'This event loop is already running':
+            # If an event loop is already running, just await the main function
+            asyncio.ensure_future(main())
+        else:
+            raise
