@@ -61,8 +61,8 @@ async def main():
     application.add_error_handler(error)
 
     # Start the bot
-    await application.start_polling()
-    await application.idle()
+    await application.start()
+    await application.updater.stop()  # Replace 'start_polling' with 'start' and 'stop'
 
 if __name__ == '__main__':
     if not os.path.exists('downloads'):
