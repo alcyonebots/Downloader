@@ -63,11 +63,8 @@ async def main():
     # Error handler
     application.add_error_handler(error)
 
-    # Start the bot
+    # Start polling the bot
     await application.start()
-    await application.updater.stop()
-
-    # Run the bot until you press Ctrl+C
     await application.run_polling()
 
 if __name__ == '__main__':
