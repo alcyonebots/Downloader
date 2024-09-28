@@ -4,8 +4,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ChatMemberHandler
 
 # Replace these with your actual channel and group usernames
-CHANNEL_USERNAME = '@themassacres'
-GROUP_USERNAME = '@Reaper_Support'
+CHANNEL_USERNAME = '@your_channel_username'
+GROUP_USERNAME = '@your_group_username'
 
 # Store user membership status
 user_membership = {}
@@ -41,11 +41,7 @@ def start(update: Update, context: CallbackContext) -> None:
         reply_markup=reply_markup
     )
 
-def update_membership(update: Update) -> None:
-    user_id = update.message.from_user.id
-    user_membership[user_id] = True  # Set membership status to True when they join
-
-def leave_group(update: Update) -> None:
+def leave_group(update: Update, context: CallbackContext) -> None:
     user_id = update.chat_member.user.id
     if user_id in user_membership:
         del user_membership[user_id]  # Remove user from membership tracking
@@ -71,7 +67,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         update.message.reply_text(
             f'Error: {str(e)}\n\n'
-            "𝗣𝗹𝗲𝗮𝘀𝗲 𝗽𝗿𝗼𝘃𝗶𝗱𝗲 𝗮 𝘃𝗮𝗹𝗶𝗱 𝗬𝗼𝘂𝗧𝘂𝗯𝗲 𝗼𝗿 𝗜𝗻𝘀𝘁𝗮𝗴𝗿𝗮𝗺 𝗹𝗶𝗻𝗸 𝘁𝗼 𝗱𝗼𝘄𝗻𝗹𝗼𝗮𝗱..."
+            "𝗦𝗲𝗻𝗱 𝗺𝗲 𝗮 𝗹𝗶𝗻𝗸 𝘁𝗼 𝗱𝗼𝘄𝗻𝗹𝗼𝗮𝗱 𝗮 𝘃𝗶𝗱𝗲𝗼 𝗳𝗿𝗼𝗺 𝗜𝗻𝘀𝘁𝗮𝗴𝗿𝗮𝗺 𝗼𝗿 𝗬𝗼𝘂𝗧𝘂𝗯𝗲..."
         )
 
 def main() -> None:
@@ -80,7 +76,9 @@ def main() -> None:
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-    dispatcher.add_handler(ChatMemberHandler(leave_group, chat_type='group'))
+    
+    # Add a handler for the ChatMember updates without specifying chat_type
+    dispatcher.add_handler(ChatMemberHandler(leave_group))
 
     updater.start_polling()
     updater.idle()
