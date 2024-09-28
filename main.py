@@ -40,11 +40,23 @@ def start(update: Update, context: CallbackContext) -> None:
 
 def check_membership(update: Update) -> bool:
     user_id = update.message.from_user.id
+    chat_id_group = update.message.chat.id
+    
     # Check if user is in the group
     group_member = update.message.chat.get_member(user_id)
-    if group_member.status in ['member', 'administrator']:
-        return True
-    return False
+    if group_member.status not in ['member', 'administrator']:
+        return False
+    
+    # Check if user is in the channel
+    try:
+        member_status = context.bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        if member_status.status not in ['member', 'administrator']:
+            return False
+    except Exception as e:
+        print(f"Error checking channel membership: {str(e)}")
+        return False
+    
+    return True
 
 def handle_message(update: Update, context: CallbackContext) -> None:
     if not check_membership(update):
