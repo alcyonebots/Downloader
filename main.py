@@ -5,8 +5,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 # Replace these with your actual channel and group usernames
 CHANNEL_USERNAME_1 = '@themassacres'
-CHANNEL_USERNAME_2 = '@AlcyoneBots'
-GROUP_USERNAME = '@Alcyone_support'
+CHANNEL_USERNAME_2 = '@Alcyonebots'
+GROUP_USERNAME = '@alcyone_support'
 
 # Store user membership status
 user_membership = {}
@@ -31,11 +31,11 @@ def download_video(url):
 def start(update: Update, context: CallbackContext) -> None:
     keyboard = [
         [
-            InlineKeyboardButton("Join First Channel", url=f"https://t.me/{CHANNEL_USERNAME_1[1:]}"),
-            InlineKeyboardButton("Join Second Channel", url=f"https://t.me/{CHANNEL_USERNAME_2[1:]}")
+            InlineKeyboardButton("Join Channel", url=f"https://t.me/{CHANNEL_USERNAME_1[1:]}"),
+            InlineKeyboardButton("Join Channel", url=f"https://t.me/{CHANNEL_USERNAME_2[1:]}")
         ],
         [
-            InlineKeyboardButton("Join Group", url=f"https://t.me/{GROUP_USERNAME[1:]}")
+            InlineKeyboardButton("Join Support", url=f"https://t.me/{GROUP_USERNAME[1:]}")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -45,6 +45,22 @@ def start(update: Update, context: CallbackContext) -> None:
         reply_markup=reply_markup
     )
 
+def check_membership(update: Update, context: CallbackContext) -> None:
+    user_id = update.chat_member.user.id
+    chat_type = update.chat_member.chat.type
+
+    # Update the user_membership dictionary based on the chat type
+    if chat_type == 'supergroup':
+        # Check if user has joined the group
+        user_membership[user_id] = True
+    elif chat_type == 'channel':
+        # Check if user has joined the first channel
+        if update.chat_member.chat.username == CHANNEL_USERNAME_1[1:]:
+            user_membership[user_id] = True
+        # Check if user has joined the second channel
+        elif update.chat_member.chat.username == CHANNEL_USERNAME_2[1:]:
+            user_membership[user_id] = True
+
 def leave_group(update: Update, context: CallbackContext) -> None:
     user_id = update.chat_member.user.id
     if user_id in user_membership:
@@ -52,6 +68,8 @@ def leave_group(update: Update, context: CallbackContext) -> None:
 
 def handle_message(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
+    
+    # Check if the user is a member of both channels and the group
     if user_id not in user_membership:
         update.message.reply_text(
             "𝗣𝗹𝗲𝗮𝘀𝗲 𝗺𝗮𝗸𝗲 𝘀𝘂𝗿𝗲 𝘁𝗵𝗮𝘁 𝘆𝗼𝘂 𝗵𝗮𝘃𝗲 𝗷𝗼𝗶𝗻𝗲𝗱 𝗯𝗼𝘁 𝗴𝗿𝗼𝘂𝗽 𝗮𝗻𝗱 𝗯𝗼𝘁 𝗰𝗵𝗮𝗻𝗻𝗲𝗹𝘀 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗯𝗼𝘁."
@@ -81,7 +99,8 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
     
-    # Add a handler for the ChatMember updates without specifying chat_type
+    # Add a handler for the ChatMember updates
+    dispatcher.add_handler(ChatMemberHandler(check_membership))
     dispatcher.add_handler(ChatMemberHandler(leave_group))
 
     updater.start_polling()
