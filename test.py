@@ -1,4 +1,4 @@
-# 7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO
+# 
 import os
 import yt_dlp
 from telegram import Update
@@ -41,7 +41,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
 
 # Main function to start the bot
 def main() -> None:
-    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO")  # Replace with your bot token
+    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas")  # Replace with your bot token
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
