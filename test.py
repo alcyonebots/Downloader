@@ -1,7 +1,7 @@
 import os
 import yt_dlp
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.error import BadRequest
 
 # Function to download video from the provided URL
@@ -16,11 +16,11 @@ def download_video(url, output_path='downloads/'):
         return ydl.prepare_filename(info)  # Return the filename for sending to the user
 
 # Function to handle the /start command
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Send me a YouTube, Instagram, or Facebook video link, and I will download it for you!')
+async def start(update: Update, context):
+    await update.message.reply_text('Send me a YouTube, Instagram, or Facebook video link, and I will download it for you!')
 
 # Function to handle video link messages
-def handle_message(update: Update, context: CallbackContext):
+async def handle_message(update: Update, context):
     url = update.message.text
     chat_id = update.message.chat_id
     valid_sites = ['youtube.com', 'youtu.be', 'instagram.com', 'facebook.com']
@@ -33,39 +33,39 @@ def handle_message(update: Update, context: CallbackContext):
             
             # Send the video to the user
             with open(video_file, 'rb') as video:
-                update.message.reply_video(video)
+                await update.message.reply_video(video)
         except Exception as e:
-            update.message.reply_text(f"Error: {e}")
+            await update.message.reply_text(f"Error: {e}")
     else:
-        update.message.reply_text("Please send a valid YouTube, Instagram, or Facebook video link.")
+        await update.message.reply_text("Please send a valid YouTube, Instagram, or Facebook video link.")
 
 # Function to handle errors
-def error(update: Update, context: CallbackContext):
+async def error(update: Update, context):
     try:
         raise context.error
     except BadRequest as e:
-        update.message.reply_text(f"BadRequest Error: {e}")
+        await update.message.reply_text(f"BadRequest Error: {e}")
 
 # Main function to run the bot
-def main():
-    # Create an updater and pass in your bot's token
-    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas", use_context=True)
-    dispatcher = updater.dispatcher
+async def main():
+    # Create the Application and pass in your bot's token
+    application = Application.builder().token("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas").build()
 
     # Command handler for /start
-    dispatcher.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
 
     # Message handler for video links
-    dispatcher.add_handler(MessageHandler(filters.TEXT, handle_message))
+    application.add_handler(MessageHandler(filters.TEXT, handle_message))
 
     # Error handler
-    dispatcher.add_error_handler(error)
+    application.add_error_handler(error)
 
     # Start the bot
-    updater.start_polling()
-    updater.idle()
+    await application.start_polling()
+    await application.idle()
 
 if __name__ == '__main__':
     if not os.path.exists('downloads'):
         os.makedirs('downloads')  # Create a directory to save downloaded videos
-    main()
+    import asyncio
+    asyncio.run(main())
