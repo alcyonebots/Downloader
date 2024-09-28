@@ -1,64 +1,58 @@
+# 7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO
 import os
 import yt_dlp
-import instaloader
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# YouTube and Facebook Video Downloader
+# Define the download function
 def download_video(url):
     ydl_opts = {
-        'format': 'best',  # Best available quality
-        'outtmpl': 'downloads/%(title)s.%(ext)s',  # Download directory and file name template
-        'cookies': 'cookies.txt'  # Relative path to the cookies file
+        'cookiefile': 'cookies.txt',  # Update this path as needed
+        'format': 'best',
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
+        'noplaylist': True,  # Prevent playlist downloading
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        video_info = ydl.extract_info(url)
+        video_title = video_info['title']
+        file_path = ydl.prepare_filename(video_info)
         ydl.download([url])
-        info = ydl.extract_info(url, download=False)
-        return info['title'], info['filepath']  # Return title and file path
-
-# Instagram Video Downloader
-def download_instagram_video(url):
-    loader = instaloader.Instaloader()
-    post = instaloader.Post.from_shortcode(loader.context, url.split("/")[-2])
-    loader.download_post(post, target=f"downloads/{post.shortcode}")
-    return post.shortcode, f"downloads/{post.shortcode}/{post.shortcode}.mp4"  # Return shortcode and file path
-
-# Command to handle start
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Welcome! Send a YouTube, Facebook, or Instagram video link to download.")
-
-# Handle video links
-def handle_message(update: Update, context: CallbackContext):
-    url = update.message.text
     
-    if "youtube.com" in url or "youtu.be" in url:
-        update.message.reply_text("Downloading YouTube video...")
+    return video_title, file_path
+
+# Define the command handler for the bot
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text("Send me a link to download a video from Instagram, Facebook, or YouTube.")
+
+def handle_message(update: Update, context: CallbackContext) -> None:
+    url = update.message.text
+    try:
         video_title, file_path = download_video(url)
-        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded: {video_title}")
-    elif "instagram.com" in url:
-        update.message.reply_text("Downloading Instagram video...")
-        shortcode, file_path = download_instagram_video(url)
-        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded Instagram video: {shortcode}")
-    elif "facebook.com" in url:
-        update.message.reply_text("Downloading Facebook video...")
-        video_title, file_path = download_video(url)
-        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded Facebook video: {video_title}")
-    else:
-        update.message.reply_text("Unsupported URL. Please send a YouTube, Facebook, or Instagram video link.")
+        update.message.reply_text(f'Downloaded: {video_title}')
+        with open(file_path, 'rb') as video_file:
+            update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+        
+        # Optionally, delete the file after sending
+        os.remove(file_path)
+        
+    except Exception as e:
+        update.message.reply_text(f'Error: {str(e)}')
 
 # Main function to start the bot
-def main():
-    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas", use_context=True)
-    
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-    
+def main() -> None:
+    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO")  # Replace with your bot token
+
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
     updater.start_polling()
     updater.idle()
 
-if __name__ == "__main__":
-    if not os.path.exists("downloads"):
-        os.makedirs("downloads")
+if __name__ == '__main__':
+    # Create the downloads directory if it doesn't exist
+    if not os.path.exists('downloads'):
+        os.makedirs('downloads')
+    
     main()
