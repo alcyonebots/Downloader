@@ -51,6 +51,9 @@ async def main():
     # Create the Application and pass in your bot's token
     application = Application.builder().token("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas").build()
 
+    # Initialize the application
+    await application.initialize()
+
     # Command handler for /start
     application.add_handler(CommandHandler("start", start))
 
@@ -62,7 +65,10 @@ async def main():
 
     # Start the bot
     await application.start()
-    await application.updater.stop()  # Replace 'start_polling' with 'start' and 'stop'
+    await application.updater.stop()
+
+    # Run the bot until you press Ctrl+C
+    await application.run_polling()
 
 if __name__ == '__main__':
     if not os.path.exists('downloads'):
