@@ -1,16 +1,14 @@
-# 
 import os
 import yt_dlp
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 
-# Define the download function
 def download_video(url):
     ydl_opts = {
-        'cookiefile': 'cookies.txt',  # Update this path as needed
+        'cookiefile': 'cookies.txt',
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'noplaylist': True,  # Prevent playlist downloading
+        'noplaylist': True, 
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -23,7 +21,7 @@ def download_video(url):
 
 # Define the command handler for the bot
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("Send me a link to download a video from Instagram, Facebook, or YouTube.")
+    update.message.reply_text("Send me a link to download a video from Instagram or YouTube.")
 
 def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
@@ -32,26 +30,20 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         update.message.reply_text(f'Downloaded: {video_title}')
         with open(file_path, 'rb') as video_file:
             update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
-        
-        # Optionally, delete the file after sending
-        os.remove(file_path)
-        
-    except Exception as e:
-        update.message.reply_text(f'Error: {str(e)}')
 
-# Main function to start the bot
+
 def main() -> None:
     updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas")  # Replace with your bot token
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    dispatcher.add_handler(MessageHandler(filters.text & ~filters.command, handle_message))
 
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
-    # Create the downloads directory if it doesn't exist
+    
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
     
