@@ -52,9 +52,6 @@ async def main():
     # Create the Application and pass in your bot's token
     application = Application.builder().token("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas").build()
 
-    # Initialize the application
-    await application.initialize()
-
     # Command handler for /start
     application.add_handler(CommandHandler("start", start))
 
@@ -72,14 +69,14 @@ if __name__ == '__main__':
     if not os.path.exists('downloads'):
         os.makedirs('downloads')  # Create a directory to save downloaded videos
 
-    # Check if an event loop is already running
+    # Run the main function with an existing event loop if available
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            # If the event loop is already running, use ensure_future
-            asyncio.ensure_future(main())
+            # If the loop is already running, ensure the main function is awaited properly
+            loop.create_task(main())
         else:
-            # If no event loop is running, start a new one
+            # Otherwise, run the event loop
             loop.run_until_complete(main())
     except RuntimeError as e:
         print(f"Error: {e}")
