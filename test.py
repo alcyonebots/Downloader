@@ -20,17 +20,16 @@ def download_video(url):
     
     return video_title, file_path
 
-# Define the command handler for the bot
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("Send me a link to download a video from Instagram, Facebook, or YouTube.")
+    update.message.reply_text("𝗦𝗲𝗻𝗱 𝗺𝗲 𝗮 𝗹𝗶𝗻𝗸 𝘁𝗼 𝗱𝗼𝘄𝗻𝗹𝗼𝗮𝗱 𝗮 𝘃𝗶𝗱𝗲𝗼 𝗳𝗿𝗼𝗺 𝗜𝗻𝘀𝘁𝗮𝗴𝗿𝗮𝗺 𝗼𝗿 𝗬𝗼𝘂𝗧𝘂𝗯𝗲...")
 
 def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
     try:
         video_title, file_path = download_video(url)
-        update.message.reply_text(f'Downloaded: {video_title}')
+        update.message.reply_text(𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
         with open(file_path, 'rb') as video_file:
-            update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+            update.message.reply_video(video_file, caption=𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
         
         # Optionally, delete the file after sending
         os.remove(file_path)
@@ -38,9 +37,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         update.message.reply_text(f'Error: {str(e)}')
 
-# Main function to start the bot
 def main() -> None:
-    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas")  # Replace with your bot token
+    updater = Updater("7373160480:AAEg-hW3KrPGxmp7yYroHccHezvsfAQmr1c") 
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
@@ -50,7 +48,6 @@ def main() -> None:
     updater.idle()
 
 if __name__ == '__main__':
-    # Create the downloads directory if it doesn't exist
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
     
