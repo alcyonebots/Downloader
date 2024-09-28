@@ -1,82 +1,57 @@
 import os
 import yt_dlp
-import asyncio
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from telegram.error import BadRequest
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# Function to download video from the provided URL
-def download_video(url, output_path='downloads/'):
+# Define the download function
+def download_video(url):
     ydl_opts = {
-        'outtmpl': f'{output_path}%(title)s.%(ext)s',  # Path to save the video
-        'cookies': 'cookies.txt',  # Path to your cookies file if needed
-        'format': 'best',  # Best available quality
+        'cookiefile': 'cookies.txt',  # Update this path as needed
+        'format': 'best',
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
+        'noplaylist': True,  # Prevent playlist downloading
     }
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        return ydl.prepare_filename(info)  # Return the filename for sending to the user
+        video_info = ydl.extract_info(url)
+        video_title = video_info['title']
+        file_path = ydl.prepare_filename(video_info)
+        ydl.download([url])
+    
+    return video_title, file_path
 
-# Function to handle the /start command
-async def start(update: Update, context):
-    await update.message.reply_text('Send me a YouTube, Instagram, or Facebook video link, and I will download it for you!')
+# Define the command handler for the bot
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text("Send me a link to download a video from Instagram, Facebook, or YouTube.")
 
-# Function to handle video link messages
-async def handle_message(update: Update, context):
+def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
-    chat_id = update.message.chat_id
-    valid_sites = ['youtube.com', 'youtu.be', 'instagram.com', 'facebook.com']
-
-    # Check if the URL is valid
-    if any(site in url for site in valid_sites):
-        try:
-            # Download the video
-            video_file = download_video(url)
-            
-            # Send the video to the user
-            with open(video_file, 'rb') as video:
-                await update.message.reply_video(video)
-        except Exception as e:
-            await update.message.reply_text(f"Error: {e}")
-    else:
-        await update.message.reply_text("Please send a valid YouTube, Instagram, or Facebook video link.")
-
-# Function to handle errors
-async def error(update: Update, context):
     try:
-        raise context.error
-    except BadRequest as e:
-        await update.message.reply_text(f"BadRequest Error: {e}")
+        video_title, file_path = download_video(url)
+        update.message.reply_text(f'Downloaded: {video_title}')
+        with open(file_path, 'rb') as video_file:
+            update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+        
+        # Optionally, delete the file after sending
+        os.remove(file_path)
+        
+    except Exception as e:
+        update.message.reply_text(f'Error: {str(e)}')
 
-# Main function to run the bot
-async def main():
-    # Create the Application and pass in your bot's token
-    application = Application.builder().token("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas").build()
+# Main function to start the bot
+def main() -> None:
+    updater = Updater("7070026696:AAF2ahAcrT7DUwr2bHnKoObu5mdO-1GNuas")  # Replace with your bot token
 
-    # Command handler for /start
-    application.add_handler(CommandHandler("start", start))
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-    # Message handler for video links
-    application.add_handler(MessageHandler(filters.TEXT, handle_message))
-
-    # Error handler
-    application.add_error_handler(error)
-
-    # Start polling the bot
-    await application.start()
-    await application.run_polling()
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == '__main__':
+    # Create the downloads directory if it doesn't exist
     if not os.path.exists('downloads'):
-        os.makedirs('downloads')  # Create a directory to save downloaded videos
-
-    # Run the main function with an existing event loop if available
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If the loop is already running, ensure the main function is awaited properly
-            loop.create_task(main())
-        else:
-            # Otherwise, run the event loop
-            loop.run_until_complete(main())
-    except RuntimeError as e:
-        print(f"Error: {e}")
+        os.makedirs('downloads')
+    
+    main()
