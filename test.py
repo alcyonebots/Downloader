@@ -9,19 +9,20 @@ def download_video(url):
     ydl_opts = {
         'format': 'best',  # Best available quality
         'outtmpl': 'downloads/%(title)s.%(ext)s',  # Download directory and file name template
+        'cookies': 'cookies.txt'  # Relative path to the cookies file
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
         info = ydl.extract_info(url, download=False)
-        return info['title']
+        return info['title'], info['filepath']  # Return title and file path
 
 # Instagram Video Downloader
 def download_instagram_video(url):
     loader = instaloader.Instaloader()
     post = instaloader.Post.from_shortcode(loader.context, url.split("/")[-2])
     loader.download_post(post, target=f"downloads/{post.shortcode}")
-    return post.shortcode
+    return post.shortcode, f"downloads/{post.shortcode}/{post.shortcode}.mp4"  # Return shortcode and file path
 
 # Command to handle start
 def start(update: Update, context: CallbackContext):
@@ -33,16 +34,16 @@ def handle_message(update: Update, context: CallbackContext):
     
     if "youtube.com" in url or "youtu.be" in url:
         update.message.reply_text("Downloading YouTube video...")
-        video_title = download_video(url)
-        update.message.reply_text(f"Downloaded: {video_title}")
+        video_title, file_path = download_video(url)
+        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded: {video_title}")
     elif "instagram.com" in url:
         update.message.reply_text("Downloading Instagram video...")
-        shortcode = download_instagram_video(url)
-        update.message.reply_text(f"Downloaded Instagram video: {shortcode}")
+        shortcode, file_path = download_instagram_video(url)
+        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded Instagram video: {shortcode}")
     elif "facebook.com" in url:
         update.message.reply_text("Downloading Facebook video...")
-        video_title = download_video(url)
-        update.message.reply_text(f"Downloaded Facebook video: {video_title}")
+        video_title, file_path = download_video(url)
+        context.bot.send_video(chat_id=update.message.chat_id, video=open(file_path, 'rb'), caption=f"Downloaded Facebook video: {video_title}")
     else:
         update.message.reply_text("Unsupported URL. Please send a YouTube, Facebook, or Instagram video link.")
 
