@@ -27,9 +27,9 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
     try:
         video_title, file_path = download_video(url)
-        update.message.reply_text(𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
+        update.message.reply_text('𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
         with open(file_path, 'rb') as video_file:
-            update.message.reply_video(video_file, caption=𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
+            update.message.reply_video(video_file, caption='𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗱: {video_title}')
         
         # Optionally, delete the file after sending
         os.remove(file_path)
