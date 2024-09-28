@@ -4,8 +4,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 # Replace these with your actual channel and group usernames
-CHANNEL_USERNAME = '@themassacres'
-GROUP_USERNAME = '@massacresmainchat'
+CHANNEL_USERNAME = '@alcyonebots'
+GROUP_USERNAME = '@alcyone_support'
 
 # Define the download function
 def download_video(url):
