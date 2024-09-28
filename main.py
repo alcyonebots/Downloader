@@ -94,7 +94,7 @@ def delete_file(file_path):
         print(f"Error deleting file: {str(e)}")
 
 def main() -> None:
-    updater = Updater("YOUR_TOKEN_HERE")
+    updater = Updater("7373160480:AAEg-hW3KrPGxmp7yYroHccHezvsfAQmr1c")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
