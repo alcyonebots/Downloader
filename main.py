@@ -1,69 +1,68 @@
 import os
+import time
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-import logging
 
-# Set up logging for better error tracking
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+MAX_RETRIES = 3  # Maximum number of retries for downloading
+CHUNK_SIZE = 10  # Chunk size in MB for downloading
+TIMEOUT = 60  # Timeout in seconds
 
-# Define the progress hook to track download progress
-def progress_hook(d, message_id, chat_id, context):
-    if d['status'] == 'downloading':
-        percent = d['_percent_str']
-        speed = d['_speed_str']
-        eta = d['eta']  # Estimated time remaining in seconds
-        context.bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=message_id,
-            text=f"Downloading... {percent}\nComplete at {speed}\nEstimated Time Remaining: {eta} seconds"
-        )
-
-    if d['status'] == 'finished':
-        context.bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=message_id,
-            text="Download finished, now sending the video...🎬"
-        )
-
-# Define the download function with chunk download, increased timeout, and retries
-def download_video(url, update):
+# Define the download function with progress updates and retry mechanism
+def download_video(url, update: Update, context: CallbackContext):
     ydl_opts = {
-        'cookiefile': 'cookies.txt',  # Update this path as needed
+        'cookiefile': 'cookies.txt',
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'noplaylist': True,  # Prevent playlist downloading
-        'retries': 10,  # Retry downloading in case of failure
-        'timeout': 1200,  # Increase timeout to 20 minutes (1200 seconds)
-        'continuedl': True,  # Resume downloads if possible
-        'http_chunk_size': 10485760,  # Download in 10 MB chunks
-        'progress_hooks': [lambda d: progress_hook(d, update.message.message_id, update.message.chat.id, update)],
-        'extractor_args': {
-            'youtube': {
-                'skip_auth_check': True  # Skip authentication check
-            }
-        }
+        'progress_hooks': [lambda d: progress_hook(d, update, context)],  # Hook for progress updates
+        'http_chunk_size': CHUNK_SIZE * 1024 * 1024,  # Set chunk size to download in MB
+        'socket_timeout': TIMEOUT,  # Set the timeout for downloading
     }
-    
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+    # Retry logic
+    for attempt in range(MAX_RETRIES):
         try:
-            video_info = ydl.extract_info(url)
-            video_title = video_info['title']
-            file_path = ydl.prepare_filename(video_info)
-            ydl.download([url])
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                video_info = ydl.extract_info(url)
+                video_title = video_info['title']
+                file_path = ydl.prepare_filename(video_info)
+                ydl.download([url])
+            return video_title, file_path
         except Exception as e:
-            logger.error(f"Error downloading video from {url}: {str(e)}")
-            raise e  # Raise the error to be handled in the main flow
-    
-    return video_title, file_path
+            if attempt < MAX_RETRIES - 1:  # If this is not the last attempt
+                update.message.reply_text(f"Download failed, retrying... (Attempt {attempt + 2}/{MAX_RETRIES})")
+                time.sleep(2)  # Wait before retrying
+            else:
+                update.message.reply_text("Failed to download after multiple attempts.")
+                print(f'Error: {str(e)}')
+                return None, None
+
+def progress_hook(d, update: Update, context: CallbackContext):
+    if d['status'] == 'downloading':
+        total_bytes = d['total_bytes']
+        downloaded_bytes = d['downloaded_bytes']
+        elapsed_time = time.time() - d['start']  # Time since download started
+
+        # Calculate download speed (bytes per second) and convert to MB/s
+        speed = downloaded_bytes / elapsed_time if elapsed_time > 0 else 0
+        speed_mb = speed / 1048576  # Convert to MB/s
+        estimated_time = (total_bytes - downloaded_bytes) / speed if speed > 0 else 0
+
+        # Convert speed and estimated time to readable formats
+        speed_str = f"{speed_mb:.2f} MB/s"
+        estimated_time_str = f"{estimated_time:.0f} seconds"
+
+        # Update the message with the current progress, speed, and estimated time
+        update.message.reply_text(
+            f"Downloading... {downloaded_bytes / total_bytes * 100:.2f}% completed.\n"
+            f"Speed: {speed_str}\n"
+            f"Estimated time remaining: {estimated_time_str}"
+        )
 
 # Updated start function with image and caption
 def start(update: Update, context: CallbackContext) -> None:
-    bot_username = context.bot.get_me().username  
+    bot_username = context.bot.get_me().username  # Get the bot's username
     
     keyboard = [
         [
@@ -83,63 +82,53 @@ def start(update: Update, context: CallbackContext) -> None:
         photo=image_url,
         caption=(
             "𝗛𝗶 𝘁𝗵𝗲𝗿𝗲 👋🏻\n"
-            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from Instagram and Youtube!! 🎬\n"
+            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from all the top social platforms!! 🎬\n"
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
-            "◎ Start a chat with @AlcDownloaderBot and send /start\n"
-            "◎ Add me to your group and send /start then send the link of the video by replying to my message.\n\n"
+            "◎ Start a chat with @VidDownld_bot and send /start\n"
+            "◎ Add me to your group and I'll be there for you for downloading videos\n\n"
             "Join our channel and support group to use the bot\n\n"
             "Let's Get Started 👾"
         ),
         reply_markup=reply_markup
     )
 
-# Handle messages that contain download links
 def handle_message(update: Update, context: CallbackContext) -> None:
     # Ensure update.message and update.message.text exist before proceeding
     if not update.message or not update.message.text:
-        logger.error(f"Received non-text update: {update}")
+        print(f"Received non-text update: {update}")
         return
-
+    
     # Check if the message is a reply to the bot's message
-    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.get_me().id:
-        url = update.message.text.strip()
+    if not update.message.reply_to_message or update.message.reply_to_message.from_user.id != context.bot.id:
+        return  # Ignore if it's not a reply to the bot's message
 
-        # Check if the URL is from YouTube or Instagram
-        if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
-            try:
-                progress_message = update.message.reply_text(f"Starting download for: {url}")
-                video_title, file_path = download_video(url, update)
-                context.bot.edit_message_text(f'Downloaded Successfully {video_title}', chat_id=update.message.chat.id, message_id=progress_message.message_id)
-                
-                # Send the downloaded video
+    url = update.message.text.strip()
+
+    # Check if the URL is from YouTube or Instagram
+    if url.startswith("http") and ("youtube.com" in url or "youtu.be" in url or "instagram.com" in url):
+        try:
+            video_title, file_path = download_video(url, update, context)
+            if video_title and file_path:  # Ensure download was successful
+                update.message.reply_text(f'Downloaded: {video_title}')
                 with open(file_path, 'rb') as video_file:
-                    context.bot.send_video(chat_id=update.message.chat.id, video=video_file, caption=f' {video_title}')
+                    update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
                 
                 # Optionally, delete the file after sending
                 os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-            except TimeoutError:
-                context.bot.edit_message_text("The download took too long and was aborted. Please try again.", chat_id=update.message.chat.id, message_id=progress_message.message_id)
-                logger.error(f"TimeoutError: The download took too long for URL: {url}")
-            except Exception as e:
-                context.bot.edit_message_text(f"An error occurred: {str(e)}", chat_id=update.message.chat.id, message_id=progress_message.message_id)
-                logger.error(f"Error: {str(e)}")
-        else:
-            # Ignore messages that are not valid YouTube or Instagram links
-            context.bot.reply_text("Please send a valid YouTube or Instagram link.", chat_id=update.message.chat.id)
+        except Exception as e:
+            print(f'Error: {str(e)}')
     else:
-        # Ignore messages that are not replies to the bot
-        logger.info("Received a message that is not a reply to the bot. Ignoring.")
+        # Ignore messages that are not valid YouTube or Instagram links
+        pass
 
-# Main function to start the bot
 def main() -> None:
-    # Replace this with your actual bot token
+    # Make sure to replace this with your actual bot token
     updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & Filters.reply, handle_message))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-    # Start the bot
     updater.start_polling()
     updater.idle()
 
