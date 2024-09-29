@@ -22,10 +22,15 @@ def download_video(url):
 
 # Updated start function with image and caption
 def start(update: Update, context: CallbackContext) -> None:
+    bot_username = context.bot.get_me().username  # Get the bot's username
+    
     keyboard = [
         [
             InlineKeyboardButton("Join Channel", url="https://t.me/alcyonebots"),
             InlineKeyboardButton("Join Support", url="https://t.me/alcyone_support")
+        ],
+        [
+            InlineKeyboardButton("Add me to your groups +", url=f"https://t.me/{bot_username}?startgroup=true")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
