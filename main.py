@@ -12,24 +12,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define the progress hook to track download progress
-def progress_hook(d, update):
+def progress_hook(d, message_id, chat_id, context):
     if d['status'] == 'downloading':
-        percent = d.get('_percent_str', '0%')
-        speed = d.get('_speed_str', '0 KB/s')
-        eta = d.get('eta', 0)  # Estimated time remaining in seconds
-        update.message.reply_text(f"Downloading... {percent} \n Speed: {speed} \n Estimated Time Remaining: {eta} seconds")
+        percent = d['_percent_str']
+        speed = d['_speed_str']
+        eta = d['eta']  # Estimated time remaining in seconds
+        context.bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=f"Downloading... {percent} \n Speed: {speed} \n Estimated Time Remaining: {eta} seconds"
+        )
 
     if d['status'] == 'finished':
-        update.message.reply_text("Download finished, now sending the video...🎬")
+        context.bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text="Download finished, now sending the video...🎬"
+        )
 
-# Define the download function with proxy settings
+# Define the download function
 def download_video(url, update):
-    proxy_url = 'http://your_proxy_url:your_proxy_port'  # Replace with your actual proxy
-    proxy = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    
     ydl_opts = {
         'cookiefile': 'cookies.txt',  # Update this path as needed
         'format': 'best',
@@ -39,25 +41,16 @@ def download_video(url, update):
         'timeout': 1200,  # Increase timeout to 20 minutes (1200 seconds)
         'continuedl': True,  # Resume downloads if possible
         'http_chunk_size': 10485760,  # Download in 10 MB chunks
-        'progress_hooks': [lambda d: progress_hook(d, update)],  # Hook for download progress
-        'proxy': proxy  # Add proxy settings here
+        'progress_hooks': [lambda d: progress_hook(d, update.message.message_id, update.message.chat.id, update)]
     }
     
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            logger.info(f"Extracting info from URL: {url}")
-            video_info = ydl.extract_info(url, download=False)  # Get info without downloading
-            if not isinstance(video_info, dict) or 'title' not in video_info:
-                raise ValueError(f"Failed to extract video info for URL: {url}")
-
-            video_title = video_info['title']
-            file_path = ydl.prepare_filename(video_info)
-            logger.info(f"Preparing to download: {video_title}")
-            ydl.download([url])
-        return video_title, file_path
-    except Exception as e:
-        logger.error(f"Error downloading video from {url}: {str(e)}")
-        raise  # Re-raise the exception to handle it in the calling function
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        video_info = ydl.extract_info(url)
+        video_title = video_info['title']
+        file_path = ydl.prepare_filename(video_info)
+        ydl.download([url])
+    
+    return video_title, file_path
 
 # Updated start function with image and caption
 def start(update: Update, context: CallbackContext) -> None:
@@ -98,32 +91,31 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         logger.error(f"Received non-text update: {update}")
         return
 
-    # Check if the message is a reply to the bot's message
-    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id:
-        url = update.message.text.strip()
-
-        # Check if the URL is from YouTube or Instagram
-        if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
-            try:
-                update.message.reply_text(f"Starting download for: {url}")
-                video_title, file_path = download_video(url, update)
-                update.message.reply_text(f'Downloaded Successfully: {video_title}')
-                
-                # Send the downloaded video
-                with open(file_path, 'rb') as video_file:
-                    update.message.reply_video(video_file, caption=f'{video_title}')
-                
-                # Optionally, delete the file after sending
-                os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-            except Exception as e:
-                update.message.reply_text(f"An error occurred: {str(e)}")
-                logger.error(f"Error: {str(e)}")
-        else:
-            # Ignore messages that are not valid YouTube or Instagram links
-            update.message.reply_text("Please send a valid YouTube or Instagram link.")
-    else:
-        # Ignore messages that are not replies to the bot
+    # Check if the message is a reply
+    if update.message.reply_to_message is None:
         return
+
+    url = update.message.text.strip()
+
+    # Check if the URL is from YouTube or Instagram
+    if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
+        try:
+            message = update.message.reply_text(f"Starting download for: {url}")
+            video_title, file_path = download_video(url, update)
+            context.bot.send_message(chat_id=update.message.chat.id, text=f'Downloaded Successfully: {video_title}')
+            
+            # Send the downloaded video
+            with open(file_path, 'rb') as video_file:
+                context.bot.send_video(chat_id=update.message.chat.id, video=video_file, caption=f' {video_title}')
+            
+            # Optionally, delete the file after sending
+            os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
+        except Exception as e:
+            update.message.reply_text(f"An error occurred: {str(e)}")
+            logger.error(f"Error: {str(e)}")
+    else:
+        # Ignore messages that are not valid YouTube or Instagram links
+        update.message.reply_text("Please send a valid YouTube or Instagram link.")
 
 # Main function to start the bot
 def main() -> None:
