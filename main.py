@@ -100,7 +100,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     # Ignore messages that are not valid links
 
 def main() -> None:
-    updater = Updater("7373160480:AAEg-hW3KrPGxmp7yYroHccHezvsfAQmr1c")
+    updater = Updater("7498896975:AAG3RLHaS-9ikHKislaqtcNGqZY29Z1eTlM")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
