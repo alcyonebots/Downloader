@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 # Define the progress hook to track download progress
 def progress_hook(d, update):
     if d['status'] == 'downloading':
-        percent = d['_percent_str']
-        speed = d['_speed_str']
-        eta = d['eta']  # Estimated time remaining in seconds
-        update.message.reply_text(f"Downloading... {percent} \n Complete at {speed} \n Estimated Time Remaining: {eta} seconds")
+        percent = d.get('_percent_str', '0%')
+        speed = d.get('_speed_str', '0 KB/s')
+        eta = d.get('eta', 0)  # Estimated time remaining in seconds
+        update.message.reply_text(f"Downloading... {percent} \n Speed: {speed} \n Estimated Time Remaining: {eta} seconds")
 
     if d['status'] == 'finished':
         update.message.reply_text("Download finished, now sending the video...🎬")
@@ -45,9 +45,14 @@ def download_video(url, update):
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            video_info = ydl.extract_info(url)
+            logger.info(f"Extracting info from URL: {url}")
+            video_info = ydl.extract_info(url, download=False)  # Get info without downloading
+            if not isinstance(video_info, dict) or 'title' not in video_info:
+                raise ValueError(f"Failed to extract video info for URL: {url}")
+
             video_title = video_info['title']
             file_path = ydl.prepare_filename(video_info)
+            logger.info(f"Preparing to download: {video_title}")
             ydl.download([url])
         return video_title, file_path
     except Exception as e:
