@@ -100,30 +100,35 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         logger.error(f"Received non-text update: {update}")
         return
 
-    url = update.message.text.strip()
+    # Check if the message is a reply to the bot's message
+    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.get_me().id:
+        url = update.message.text.strip()
 
-    # Check if the URL is from YouTube or Instagram
-    if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
-        try:
-            update.message.reply_text(f"Starting download for: {url}")
-            video_title, file_path = download_video(url, update)
-            update.message.reply_text(f'Downloaded Successfully {video_title}')
-            
-            # Send the downloaded video
-            with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f' {video_title}')
-            
-            # Optionally, delete the file after sending
-            os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-        except TimeoutError:
-            update.message.reply_text("The download took too long and was aborted. Please try again.")
-            logger.error(f"TimeoutError: The download took too long for URL: {url}")
-        except Exception as e:
-            update.message.reply_text(f"An error occurred: {str(e)}")
-            logger.error(f"Error: {str(e)}")
+        # Check if the URL is from YouTube or Instagram
+        if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
+            try:
+                progress_message = update.message.reply_text(f"Starting download for: {url}")
+                video_title, file_path = download_video(url, update)
+                context.bot.edit_message_text(f'Downloaded Successfully {video_title}', chat_id=update.message.chat.id, message_id=progress_message.message_id)
+                
+                # Send the downloaded video
+                with open(file_path, 'rb') as video_file:
+                    context.bot.send_video(chat_id=update.message.chat.id, video=video_file, caption=f' {video_title}')
+                
+                # Optionally, delete the file after sending
+                os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
+            except TimeoutError:
+                context.bot.edit_message_text("The download took too long and was aborted. Please try again.", chat_id=update.message.chat.id, message_id=progress_message.message_id)
+                logger.error(f"TimeoutError: The download took too long for URL: {url}")
+            except Exception as e:
+                context.bot.edit_message_text(f"An error occurred: {str(e)}", chat_id=update.message.chat.id, message_id=progress_message.message_id)
+                logger.error(f"Error: {str(e)}")
+        else:
+            # Ignore messages that are not valid YouTube or Instagram links
+            context.bot.reply_text("Please send a valid YouTube or Instagram link.", chat_id=update.message.chat.id)
     else:
-        # Ignore messages that are not valid YouTube or Instagram links
-        update.message.reply_text("Please send a valid YouTube or Instagram link.")
+        # Ignore messages that are not replies to the bot
+        logger.info("Received a message that is not a reply to the bot. Ignoring.")
 
 # Main function to start the bot
 def main() -> None:
@@ -132,7 +137,7 @@ def main() -> None:
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.reply, handle_message))
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.reply, handle_message))
 
     # Start the bot
     updater.start_polling()
