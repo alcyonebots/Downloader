@@ -1,7 +1,11 @@
 import os
+import logging
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Define the download function with progress updates
 def download_video(url, update: Update, context: CallbackContext):
@@ -10,22 +14,33 @@ def download_video(url, update: Update, context: CallbackContext):
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'noplaylist': False,  # Prevent playlist downloading
-        'progress_hooks': [lambda d: progress_hook(d, update, context)],  # Hook for progress updates
+        'progress_hooks': [lambda d: progress_hook(d, update, context)],
+        'logger': logging.getLogger(),
+        'verbose': True,  # Enable verbose output for debugging
     }
     
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        video_info = ydl.extract_info(url)
-        video_title = video_info['title']
-        file_path = ydl.prepare_filename(video_info)
-        ydl.download([url])
-    
-    return video_title, file_path
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            logging.info(f"Attempting to download: {url}")  # Log the URL being downloaded
+            video_info = ydl.extract_info(url)
+            video_title = video_info['title']
+            file_path = ydl.prepare_filename(video_info)
+            ydl.download([url])
+        return video_title, file_path
+    except yt_dlp.utils.ExtractorError as e:
+        logging.error(f"YouTube download failed: {str(e)}")
+        update.message.reply_text(f"Failed to download video: {str(e)}.")
+        return None, None
+    except Exception as e:
+        logging.error(f"General error: {str(e)}")
+        update.message.reply_text(f"An error occurred: {str(e)}.")
+        return None, None
 
 def progress_hook(d, update: Update, context: CallbackContext):
     if d['status'] == 'downloading':
-        total_bytes = d['total_bytes']
-        downloaded_bytes = d['downloaded_bytes']
-        percentage = (downloaded_bytes / total_bytes) * 100
+        total_bytes = d.get('total_bytes', 1)  # Default to 1 to avoid division by zero
+        downloaded_bytes = d.get('downloaded_bytes', 0)
+        percentage = (downloaded_bytes / total_bytes) * 100 if total_bytes > 0 else 0
         update.message.reply_text(f"Downloading... {percentage:.2f}% completed.")
 
 # Updated start function with image and caption
@@ -63,7 +78,7 @@ def start(update: Update, context: CallbackContext) -> None:
 def handle_message(update: Update, context: CallbackContext) -> None:
     # Ensure update.message and update.message.text exist before proceeding
     if not update.message or not update.message.text:
-        print(f"Received non-text update: {update}")
+        logging.info(f"Received non-text update: {update}")
         return
     
     # Check if the message is a reply to the bot's message
@@ -74,20 +89,16 @@ def handle_message(update: Update, context: CallbackContext) -> None:
 
     # Check if the URL is from YouTube or Instagram
     if url.startswith("http") and ("youtube.com" in url or "youtu.be" in url or "instagram.com" in url):
-        try:
-            video_title, file_path = download_video(url, update, context)
+        video_title, file_path = download_video(url, update, context)
+        if video_title and file_path:  # Check if download was successful
             update.message.reply_text(f'Downloaded: {video_title}')
             with open(file_path, 'rb') as video_file:
                 update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
             
             # Optionally, delete the file after sending
             os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-        except Exception as e:
-            # Log the error instead of sending a message to the user
-            print(f'Error: {str(e)}')
     else:
-        # Ignore messages that are not valid YouTube or Instagram links
-        pass
+        logging.info("Received message with an invalid URL.")
 
 def main() -> None:
     # Make sure to replace this with your actual bot token
