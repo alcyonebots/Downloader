@@ -22,8 +22,15 @@ def progress_hook(d, update):
     if d['status'] == 'finished':
         update.message.reply_text("Download finished, now sending the video...🎬")
 
-# Define the download function with chunk download, increased timeout, and retries
+# Define the download function with proxy settings
 def download_video(url, update):
+    # Replace with your proxy settings
+    proxy_url = 'http://your_proxy_url:your_proxy_port'
+    proxy = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
+    
     ydl_opts = {
         'cookiefile': 'cookies.txt',  # Update this path as needed
         'format': 'best',
@@ -32,8 +39,9 @@ def download_video(url, update):
         'retries': 10,  # Retry downloading in case of failure
         'timeout': 1200,  # Increase timeout to 20 minutes (1200 seconds)
         'continuedl': True,  # Resume downloads if possible
-        'http_chunk_size': 10485760,  # Download in 10 MB chunks, value is in bytes adjust accordingly 
-        'progress_hooks': [lambda d: progress_hook(d, update)]  # Hook for download progress
+        'http_chunk_size': 10485760,  # Download in 10 MB chunks
+        'progress_hooks': [lambda d: progress_hook(d, update)],  # Hook for download progress
+        'proxy': proxy  # Add proxy settings here
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -83,30 +91,32 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         logger.error(f"Received non-text update: {update}")
         return
 
-    url = update.message.text.strip()
+    # Check if the message is a reply to the bot's message
+    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id:
+        url = update.message.text.strip()
 
-    # Check if the URL is from YouTube or Instagram
-    if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
-        try:
-            update.message.reply_text(f"Starting download for: {url}")
-            video_title, file_path = download_video(url, update)
-            update.message.reply_text(f'Downloaded Successfully {video_title}')
-            
-            # Send the downloaded video
-            with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f' {video_title}')
-            
-            # Optionally, delete the file after sending
-            os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-        except TimeoutError:
-            update.message.reply_text("The download took too long and was aborted. Please try again.")
-            logger.error(f"TimeoutError: The download took too long for URL: {url}")
-        except Exception as e:
-            update.message.reply_text(f"An error occurred: {str(e)}")
-            logger.error(f"Error: {str(e)}")
+        # Check if the URL is from YouTube or Instagram
+        if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
+            try:
+                update.message.reply_text(f"Starting download for: {url}")
+                video_title, file_path = download_video(url, update)
+                update.message.reply_text(f'Downloaded Successfully: {video_title}')
+                
+                # Send the downloaded video
+                with open(file_path, 'rb') as video_file:
+                    update.message.reply_video(video_file, caption=f'{video_title}')
+                
+                # Optionally, delete the file after sending
+                os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
+            except Exception as e:
+                update.message.reply_text(f"An error occurred: {str(e)}")
+                logger.error(f"Error: {str(e)}")
+        else:
+            # Ignore messages that are not valid YouTube or Instagram links
+            update.message.reply_text("Please send a valid YouTube or Instagram link.")
     else:
-        # Ignore messages that are not valid YouTube or Instagram links
-        update.message.reply_text("Please send a valid YouTube or Instagram link.")
+        # Ignore messages that are not replies to the bot
+        return
 
 # Main function to start the bot
 def main() -> None:
