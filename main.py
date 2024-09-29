@@ -123,7 +123,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
 # Main function to start the bot
 def main() -> None:
     # Replace this with your actual bot token
-    updater = Updater("YOUR_BOT_TOKEN_HERE")
+    updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
