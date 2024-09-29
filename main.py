@@ -24,8 +24,7 @@ def progress_hook(d, update):
 
 # Define the download function with proxy settings
 def download_video(url, update):
-    # Replace with your proxy settings
-    proxy_url = 'http://your_proxy_url:your_proxy_port'
+    proxy_url = 'http://your_proxy_url:your_proxy_port'  # Replace with your actual proxy
     proxy = {
         'http': proxy_url,
         'https': proxy_url
@@ -44,13 +43,16 @@ def download_video(url, update):
         'proxy': proxy  # Add proxy settings here
     }
     
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        video_info = ydl.extract_info(url)
-        video_title = video_info['title']
-        file_path = ydl.prepare_filename(video_info)
-        ydl.download([url])
-    
-    return video_title, file_path
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            video_info = ydl.extract_info(url)
+            video_title = video_info['title']
+            file_path = ydl.prepare_filename(video_info)
+            ydl.download([url])
+        return video_title, file_path
+    except Exception as e:
+        logger.error(f"Error downloading video from {url}: {str(e)}")
+        raise  # Re-raise the exception to handle it in the calling function
 
 # Updated start function with image and caption
 def start(update: Update, context: CallbackContext) -> None:
@@ -121,7 +123,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
 # Main function to start the bot
 def main() -> None:
     # Replace this with your actual bot token
-    updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")
+    updater = Updater("YOUR_BOT_TOKEN_HERE")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
