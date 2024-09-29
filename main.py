@@ -43,45 +43,7 @@ def start(update: Update, context: CallbackContext) -> None:
         reply_markup=reply_markup
     )
 
-def check_membership(update: Update, context: CallbackContext) -> bool:
-    # Ensure update.message exists before proceeding
-    if not update.message:
-        return False
-    
-    user_id = update.message.from_user.id
-    
-    # Check if user is in the group
-    try:
-        group_member = context.bot.get_chat_member(GROUP_USERNAME, user_id)
-        if group_member.status not in ['member', 'administrator']:
-            return False
-    except Exception as e:
-        print(f"Error checking group membership: {str(e)}")
-        return False
-    
-    # Check if user is in the channel
-    try:
-        member_status = context.bot.get_chat_member(CHANNEL_USERNAME, user_id)
-        if member_status.status not in ['member', 'administrator']:
-            return False
-    except Exception as e:
-        print(f"Error checking channel membership: {str(e)}")
-        return False
-    
-    return True
-
 def handle_message(update: Update, context: CallbackContext) -> None:
-    # Ensure update.message exists before proceeding
-    if not update.message:
-        return
-    
-    # Check for valid membership
-    if not check_membership(update, context):
-        update.message.reply_text(
-            "Please make sure that you have joined the support group and channel to use the bot."
-        )
-        return
-    
     url = update.message.text
     
     # Check if the URL is from YouTube or Instagram
