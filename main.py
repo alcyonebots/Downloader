@@ -36,7 +36,7 @@ def start(update: Update, context: CallbackContext) -> None:
         "𝗛𝗶 𝘁𝗵𝗲𝗿𝗲 👋🏻\n"
         "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from all the top social platforms!! 🎬\n"
         "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
-        "◎ Start a chat with @Vdo_Downloader_bot and send /start\n"
+        "◎ Start a chat with @VidDownld_bot and send /start\n"
         "◎ Add me to your group and I'll be there for you for downloading videos\n\n"
         "Join our channel and support group to use the bot\n\n"
         "Let's Get Started 👾",
@@ -44,6 +44,10 @@ def start(update: Update, context: CallbackContext) -> None:
     )
 
 def check_membership(update: Update, context: CallbackContext) -> bool:
+    # Ensure update.message exists before proceeding
+    if not update.message:
+        return False
+    
     user_id = update.message.from_user.id
     
     # Check if user is in the group
@@ -67,6 +71,10 @@ def check_membership(update: Update, context: CallbackContext) -> bool:
     return True
 
 def handle_message(update: Update, context: CallbackContext) -> None:
+    # Ensure update.message exists before proceeding
+    if not update.message:
+        return
+    
     # Check for valid membership
     if not check_membership(update, context):
         update.message.reply_text(
@@ -92,7 +100,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     # Ignore messages that are not valid links
 
 def main() -> None:
-    updater = Updater("7498896975:AAG3RLHaS-9ikHKislaqtcNGqZY29Z1eTlM")
+    updater = Updater("7373160480:AAEg-hW3KrPGxmp7yYroHccHezvsfAQmr1c")
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
