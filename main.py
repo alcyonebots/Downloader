@@ -3,13 +3,20 @@ import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
+# Global variable to store message object
+progress_message = None
+
 # Define the download function
-def download_video(url):
+def download_video(url, update):
     ydl_opts = {
         'cookiefile': 'cookies.txt',  # Update this path as needed
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'noplaylist': True,  # Prevent playlist downloading
+        'retries': 10,  # Retry downloading in case of failure
+        'timeout': 600,  # Timeout for long downloads
+        'continuedl': True,  # Resume downloads if possible
+        'progress_hooks': [lambda d: progress_hook(d, update)]  # Hook for download progress
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -19,6 +26,30 @@ def download_video(url):
         ydl.download([url])
     
     return video_title, file_path
+
+# Progress hook to show download progress
+def progress_hook(d, update):
+    global progress_message
+    if d['status'] == 'downloading':
+        percent = d['_percent_str']
+        eta = d['eta']
+        speed = d['_speed_str']
+        message_text = f"Downloading... {percent} complete. Speed: {speed}. ETA: {eta} seconds."
+        
+        # Print progress in console
+        print(message_text)
+
+        # Send progress to the user
+        if progress_message is None:  # First update, send a new message
+            progress_message = update.message.reply_text(message_text)
+        else:  # Edit the existing progress message
+            progress_message.edit_text(message_text)
+    
+    if d['status'] == 'finished':
+        print("Download completed.")
+        if progress_message:
+            progress_message.edit_text("Download completed.")
+            progress_message = None  # Reset after completion
 
 # Updated start function with image and caption
 def start(update: Update, context: CallbackContext) -> None:
@@ -42,11 +73,11 @@ def start(update: Update, context: CallbackContext) -> None:
         photo=image_url,
         caption=(
             "𝗛𝗶 𝘁𝗵𝗲𝗿𝗲 👋🏻\n"
-            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from all the top social platforms!! 🎬\n"
+            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from Instagram and Youtube!! 🎬\n"
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
             "◎ Start a chat with @AlcDownloaderBot and send /start\n"
-            "◎ Add me to your group and I'll be there for you for downloading videos\n\n"
-            "Join our channel and support group to use the bot\n\n"
+            "◎ Add me to your group send /start then send the link of the short/reel by replying to my message.\n\n"
+            "Join our channel and support group from the buttons given below‼️ \n\n"
             "Let's Get Started 👾"
         ),
         reply_markup=reply_markup
@@ -63,10 +94,11 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     # Check if the URL is from YouTube or Instagram
     if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
         try:
-            video_title, file_path = download_video(url)
-            update.message.reply_text(f'Downloaded: {video_title}')
+            video_title, file_path = download_video(url, update)
+            update.message.reply_text(f' Successfully Downloaded!{video_title}\n\n'
+                                      'Wait a few seconds to get your video🎬')
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+                update.message.reply_video(video_file, caption=f' ')
             
             # Optionally, delete the file after sending
             os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
