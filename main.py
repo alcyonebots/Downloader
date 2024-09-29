@@ -47,8 +47,12 @@ def check_membership(update: Update, context: CallbackContext) -> bool:
     user_id = update.message.from_user.id
     
     # Check if user is in the group
-    group_member = update.message.chat.get_member(user_id)
-    if group_member.status not in ['member', 'administrator']:
+    try:
+        group_member = context.bot.get_chat_member(GROUP_USERNAME, user_id)
+        if group_member.status not in ['member', 'administrator']:
+            return False
+    except Exception as e:
+        print(f"Error checking group membership: {str(e)}")
         return False
     
     # Check if user is in the channel
@@ -71,22 +75,21 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         return
     
     url = update.message.text
-    # Check if the URL is from YouTube or Instagram
-    if not (url.startswith("http") and ("youtube.com" in url or "instagram.com" in url)):
-        update.message.reply_text("Please send a valid YouTube or Instagram link")
-        return
     
-    try:
-        video_title, file_path = download_video(url)
-        update.message.reply_text('Downloaded: {video_title}')
-        with open(file_path, 'rb') as video_file:
-            update.message.reply_video(video_file, caption='Downloaded: {video_title}')
-        
-        # Optionally, delete the file after sending
-        os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-        
-    except Exception as e:
-        update.message.reply_text(f'Error: {str(e)}')
+    # Check if the URL is from YouTube or Instagram
+    if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
+        try:
+            video_title, file_path = download_video(url)
+            update.message.reply_text(f'Downloaded: {video_title}')
+            with open(file_path, 'rb') as video_file:
+                update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+            
+            # Optionally, delete the file after sending
+            os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
+        except Exception as e:
+            # Optional: log the error instead of sending a message
+            print(f'Error: {str(e)}')
+    # Ignore messages that are not valid links
 
 def main() -> None:
     updater = Updater("7373160480:AAEg-hW3KrPGxmp7yYroHccHezvsfAQmr1c")
