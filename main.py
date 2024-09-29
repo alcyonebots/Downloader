@@ -20,7 +20,7 @@ def progress_hook(d, message_id, chat_id, context):
         context.bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"Downloading... {percent} \n Speed: {speed} \n Estimated Time Remaining: {eta} seconds"
+            text=f"Downloading... {percent}\nComplete at {speed}\nEstimated Time Remaining: {eta} seconds"
         )
 
     if d['status'] == 'finished':
@@ -30,7 +30,7 @@ def progress_hook(d, message_id, chat_id, context):
             text="Download finished, now sending the video...🎬"
         )
 
-# Define the download function
+# Define the download function with chunk download, increased timeout, and retries
 def download_video(url, update):
     ydl_opts = {
         'cookiefile': 'cookies.txt',  # Update this path as needed
@@ -41,14 +41,23 @@ def download_video(url, update):
         'timeout': 1200,  # Increase timeout to 20 minutes (1200 seconds)
         'continuedl': True,  # Resume downloads if possible
         'http_chunk_size': 10485760,  # Download in 10 MB chunks
-        'progress_hooks': [lambda d: progress_hook(d, update.message.message_id, update.message.chat.id, update)]
+        'progress_hooks': [lambda d: progress_hook(d, update.message.message_id, update.message.chat.id, update)],
+        'extractor_args': {
+            'youtube': {
+                'skip_auth_check': True  # Skip authentication check
+            }
+        }
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        video_info = ydl.extract_info(url)
-        video_title = video_info['title']
-        file_path = ydl.prepare_filename(video_info)
-        ydl.download([url])
+        try:
+            video_info = ydl.extract_info(url)
+            video_title = video_info['title']
+            file_path = ydl.prepare_filename(video_info)
+            ydl.download([url])
+        except Exception as e:
+            logger.error(f"Error downloading video from {url}: {str(e)}")
+            raise e  # Raise the error to be handled in the main flow
     
     return video_title, file_path
 
@@ -91,25 +100,24 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         logger.error(f"Received non-text update: {update}")
         return
 
-    # Check if the message is a reply
-    if update.message.reply_to_message is None:
-        return
-
     url = update.message.text.strip()
 
     # Check if the URL is from YouTube or Instagram
     if url.startswith("http") and ("youtube.com" in url or "instagram.com" in url):
         try:
-            message = update.message.reply_text(f"Starting download for: {url}")
+            update.message.reply_text(f"Starting download for: {url}")
             video_title, file_path = download_video(url, update)
-            context.bot.send_message(chat_id=update.message.chat.id, text=f'Downloaded Successfully: {video_title}')
+            update.message.reply_text(f'Downloaded Successfully {video_title}')
             
             # Send the downloaded video
             with open(file_path, 'rb') as video_file:
-                context.bot.send_video(chat_id=update.message.chat.id, video=video_file, caption=f' {video_title}')
+                update.message.reply_video(video_file, caption=f' {video_title}')
             
             # Optionally, delete the file after sending
             os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
+        except TimeoutError:
+            update.message.reply_text("The download took too long and was aborted. Please try again.")
+            logger.error(f"TimeoutError: The download took too long for URL: {url}")
         except Exception as e:
             update.message.reply_text(f"An error occurred: {str(e)}")
             logger.error(f"Error: {str(e)}")
@@ -124,7 +132,7 @@ def main() -> None:
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.reply, handle_message))
 
     # Start the bot
     updater.start_polling()
