@@ -43,7 +43,7 @@ def start(update: Update, context: CallbackContext) -> None:
             "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from YouTube and Instagram!! 🎬\n"
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
             "◎ Start a chat with @AlcDownloaderBot and send /start\n"
-            "◎ Add me to your group and send /start then send the link by replying to me‼️\n\n"
+            "◎ Add me to your group and send /start then send the link directly!\n\n"
             "Join our channel and support group to use the bot\n\n"
             "Let's Get Started 👾"
         ),
@@ -58,7 +58,6 @@ def is_valid_url(text: str) -> bool:
 
 # Handle messages with links
 def handle_message(update: Update, context: CallbackContext) -> None:
-    # Check if the message is a YouTube or Instagram link
     url = update.message.text
     if is_valid_url(url):
         try:
@@ -70,13 +69,14 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             os.remove(file_path)
         except Exception as e:
             update.message.reply_text(f'Error: {str(e)}')
-    # If it's a group chat and not a valid URL, ignore the message
+    # In group chats, if it's not a valid URL, ignore the message
     elif update.message.chat.type != 'private':
-        return  # Do nothing if it's a non-valid message in group chats
-    # If it's a private chat but not a valid URL
+        return  # Ignore non-valid messages in group chats
+    # In private chat, prompt for valid URL if the message doesn't contain one
     else:
         update.message.reply_text("Please send a valid YouTube or Instagram link.")
 
+# Main function to start the bot
 def main() -> None:
     updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")  # Your bot token
 
