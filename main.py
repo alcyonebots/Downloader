@@ -64,9 +64,9 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         try:
             update.message.reply_text("Starting download...")
             video_title, file_path = download_video(url)  # Download the video
-            update.message.reply_text(f'Downloaded: {video_title}')
+            update.message.reply_text(f'Downloaded Successfully! Now sending you the video file 🎬')
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+                update.message.reply_video(video_file, caption=f'{video_title}')
             os.remove(file_path)
         except Exception as e:
             update.message.reply_text(f'Error: {str(e)}')
@@ -77,7 +77,6 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text("Please send a valid YouTube or Instagram link.")
 
-# Main function to start the bot
 def main() -> None:
     updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")  # Your bot token
 
