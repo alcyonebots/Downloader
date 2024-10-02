@@ -76,7 +76,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             message.edit_text(f'Downloaded: {escape_markdown(video_title)}')
 
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption= {escape_markdown(video_title)}')
+                update.message.reply_video(video_file, caption=' {escape_markdown(video_title)}')
             
             # Optionally, delete the file after sending
             os.remove(file_path)
