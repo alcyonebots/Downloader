@@ -1,117 +1,107 @@
 import os
-import logging
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.utils.helpers import escape_markdown
+import logging
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Define the download function with progress updates
-def download_video(url, update: Update, context: CallbackContext):
+# Define the download function
+def download_video(url, update, context):
+    def progress_hook(d):
+        if d['status'] == 'downloading':
+            percent = d.get('_percent_str', '0%')
+            update.message.edit_text(f"Downloading... {percent}")
+
     ydl_opts = {
-        'cookiefile': 'cookies.txt',
+        'cookiefile': 'cookies.txt',  # Update this path as needed
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'noplaylist': False,  # Prevent playlist downloading
-        'progress_hooks': [lambda d: progress_hook(d, update, context)],
-        'logger': logging.getLogger(),
-        'verbose': True,  # Enable verbose output for debugging
+        'noplaylist': True,
+        'progress_hooks': [progress_hook],  # Hook to track download progress
     }
     
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            logging.info(f"Attempting to download: {url}")  # Log the URL being downloaded
-            video_info = ydl.extract_info(url)
-            video_title = video_info['title']
-            file_path = ydl.prepare_filename(video_info)
-            ydl.download([url])
-        return video_title, file_path
-    except yt_dlp.utils.ExtractorError as e:
-        logging.error(f"YouTube download failed: {str(e)}")
-        update.message.reply_text(f"Failed to download video: {str(e)}.")
-        return None, None
-    except Exception as e:
-        logging.error(f"General error: {str(e)}")
-        update.message.reply_text(f"An error occurred: {str(e)}.")
-        return None, None
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        video_info = ydl.extract_info(url)
+        video_title = video_info['title']
+        file_path = ydl.prepare_filename(video_info)
+        ydl.download([url])
+    
+    return video_title, file_path
 
-def progress_hook(d, update: Update, context: CallbackContext):
-    if d['status'] == 'downloading':
-        total_bytes = d.get('total_bytes', 1)  # Default to 1 to avoid division by zero
-        downloaded_bytes = d.get('downloaded_bytes', 0)
-        percentage = (downloaded_bytes / total_bytes) * 100 if total_bytes > 0 else 0
-        update.message.reply_text(f"Downloading... {percentage:.2f}% completed.")
-
-# Updated start function with image and caption
+# Define the start command handler for the bot
 def start(update: Update, context: CallbackContext) -> None:
     bot_username = context.bot.get_me().username  # Get the bot's username
     
+    # Inline keyboard buttons for joining channel, support, and adding to groups
     keyboard = [
         [
             InlineKeyboardButton("Join Channel", url="https://t.me/alcyonebots"),
             InlineKeyboardButton("Join Support", url="https://t.me/alcyone_support")
         ],
         [
-            InlineKeyboardButton("Add me to your groups +", url=f"https://t.me/{bot_username}?startgroup=true")
+            InlineKeyboardButton("Add me to your groups ➕", url=f"https://t.me/{bot_username}?startgroup=true")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
+    # Image URL
     image_url = "https://i.imghippo.com/files/OTItE1727595318.jpg"
     
-    # Send the image with the caption
+    # Send the image with a caption
     update.message.reply_photo(
         photo=image_url,
         caption=(
             "𝗛𝗶 𝘁𝗵𝗲𝗿𝗲 👋🏻\n"
-            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from all the top social platforms!! 🎬\n"
+            "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from YouTube and Instagram!! 🎬\n"
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
             "◎ Start a chat with @AlcDownloaderBot and send /start\n"
-            "◎ In group send /start and then send the link of the video while replying me!!\n\n"
+            "◎ Add me to your group and I'll be there for you for downloading videos\n\n"
             "Join our channel and support group to use the bot\n\n"
             "Let's Get Started 👾"
         ),
         reply_markup=reply_markup
     )
 
+# Handler for video download messages
 def handle_message(update: Update, context: CallbackContext) -> None:
-    # Ensure update.message and update.message.text exist before proceeding
-    if not update.message or not update.message.text:
-        logging.info(f"Received non-text update: {update}")
-        return
-    
-    # Check if the message is a reply to the bot's message
-    if not update.message.reply_to_message or update.message.reply_to_message.from_user.id != context.bot.id:
-        return  # Ignore if it's not a reply to the bot's message
+    url = update.message.text
+    try:
+        if "youtube.com/shorts" in url or "instagram.com/reel" in url:  # Only respond to YouTube Shorts or Instagram Reels
+            message = update.message.reply_text("Preparing to download...")
+            video_title, file_path = download_video(url, message, context)
+            message.edit_text(f'Downloaded: {escape_markdown(video_title)}')
 
-    url = update.message.text.strip()
-
-    # Check if the URL is from YouTube or Instagram
-    if url.startswith("http") and ("youtube.com" in url or "youtu.be" in url or "instagram.com" in url):
-        video_title, file_path = download_video(url, update, context)
-        if video_title and file_path:  # Check if download was successful
-            update.message.reply_text(f'Downloaded: {video_title}')
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
+                update.message.reply_video(video_file, caption= {escape_markdown(video_title)}')
             
             # Optionally, delete the file after sending
-            os.remove(file_path)  # Uncomment if you want to delete the file right after sending.
-    else:
-        logging.info("Received message with an invalid URL.")
+            os.remove(file_path)
+        else:
+            update.message.reply_text("Sorry, I can only download YouTube shorts and Instagram reels.")
+        
+    except Exception as e:
+        update.message.reply_text(f'Error: {escape_markdown(str(e))}')
 
+# Main function to start the bot
 def main() -> None:
-    # Make sure to replace this with your actual bot token
-    updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")
+    updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U", use_context=True)  # Replace with your bot token
 
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    
+    # Message handler for text that is not commands, restricted to group chats for specific URLs
+    dispatcher.add_handler(MessageHandler(Filters.text & Filters.chat_type.groups, handle_message))
 
+    # Start the bot
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
+    # Create the downloads directory if it doesn't exist
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
     
