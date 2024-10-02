@@ -2,6 +2,7 @@ import os
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import re  # Import regex to filter URLs
 
 # Define the download function
 def download_video(url) -> str:
@@ -49,32 +50,32 @@ def start(update: Update, context: CallbackContext) -> None:
         reply_markup=reply_markup
     )
 
+# Function to check if the message contains a YouTube or Instagram link
+def is_valid_url(text: str) -> bool:
+    youtube_pattern = r'(https?://)?(www\.)?(youtube|youtu\.be)(\.com)?/.*'
+    instagram_pattern = r'(https?://)?(www\.)?instagram\.com/.*'
+    return re.match(youtube_pattern, text) or re.match(instagram_pattern, text)
+
+# Handle messages with links
 def handle_message(update: Update, context: CallbackContext) -> None:
-    # Check if the message is a reply to the bot's message or sent in a private chat
-    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id:
-        url = update.message.text
+    # Check if the message is a YouTube or Instagram link
+    url = update.message.text
+    if is_valid_url(url):
         try:
             update.message.reply_text("Starting download...")
-            video_title, file_path = download_video(url)  # No need to pass update now
+            video_title, file_path = download_video(url)  # Download the video
             update.message.reply_text(f'Downloaded: {video_title}')
             with open(file_path, 'rb') as video_file:
                 update.message.reply_video(video_file, caption=f'Downloaded: {video_title}')
             os.remove(file_path)
         except Exception as e:
             update.message.reply_text(f'Error: {str(e)}')
-
-    # If in private chat, respond directly
-    elif update.message.chat.type == 'private':
-        url = update.message.text
-        try:
-            update.message.reply_text("Starting download...")
-            video_title, file_path = download_video(url)  # No need to pass update now
-            update.message.reply_text(f'Downloaded Successfully, Now sending you the file 🗃️')
-            with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f' {video_title}')
-            os.remove(file_path)
-        except Exception as e:
-            update.message.reply_text(f'Error: {str(e)}')
+    # If it's a group chat and not a valid URL, ignore the message
+    elif update.message.chat.type != 'private':
+        return  # Do nothing if it's a non-valid message in group chats
+    # If it's a private chat but not a valid URL
+    else:
+        update.message.reply_text("Please send a valid YouTube or Instagram link.")
 
 # Main function to start the bot
 def main() -> None:
