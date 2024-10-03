@@ -2,21 +2,25 @@ import os
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-import re  # Import regex to filter URLs
+import re
 
 # Define the download function
 def download_video(url) -> str:
     ydl_opts = {
         'cookiefile': 'cookies.txt',  # Update this path as needed
-        'format': 'best',
+        'format': 'bestvideo+bestaudio/best',  # Best video and audio combination
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'noplaylist': True,  # Prevent playlist downloading
+        'postprocessors': [
+            {'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}  # Convert to mp4 if not already
+        ],
+        'merge_output_format': 'mp4',  # Ensure mp4 format
+        'video-quality': 'high',  # High video quality
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         video_info = ydl.extract_info(url, download=True)
-        video_title = video_info['title']
-        return video_title, ydl.prepare_filename(video_info)
+        return ydl.prepare_filename(video_info)  # Return the downloaded file path
 
 # Define the command handler for the bot
 def start(update: Update, context: CallbackContext) -> None:
@@ -61,12 +65,10 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
     if is_valid_url(url):
         try:
-            update.message.reply_text("Starting download...")
-            video_title, file_path = download_video(url)  # Download the video
-            update.message.reply_text(f'Downloaded Successfully! Now sending you the video file 🎬')
+            file_path = download_video(url)  # Download the video
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file, caption=f'{video_title}')
-            os.remove(file_path)
+                update.message.reply_video(video_file)  # Send video directly without caption
+            os.remove(file_path)  # Remove the file after sending
         except Exception as e:
             update.message.reply_text(f'Error: {str(e)}')
     # In group chats, if it's not a valid URL, ignore the message
