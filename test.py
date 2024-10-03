@@ -15,10 +15,9 @@ def download_video(url) -> str:
             {'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}  # Convert to mp4 if not already
         ],
         'merge_output_format': 'mp4',  # Ensure mp4 format
-        'video-quality': 'high',  # High video quality
         'socket_timeout': 60,  # Increase socket timeout to 60 seconds
         'http_chunk_size': 10 * 1024 * 1024,  # Split the file into 10MB chunks to avoid long write operations
-        'max_filesize': '2000M',  # Set a 2GB limit for the downloaded video
+        'max_filesize': 2 * 1024 * 1024 * 1024,  # Set a 2GB limit for the downloaded video in bytes (2GB = 2 * 1024^3)
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -35,7 +34,7 @@ def start(update: Update, context: CallbackContext) -> None:
             InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
         ],
         [
-            InlineKeyboardButton("Add me to your groups ➕", url=f"https://t.me/{bot_username}?startgroup=true")
+            InlineKeyboardButton("𝗔𝗱𝗱 𝗺𝗲 𝘁𝗼 𝘆𝗼𝘂𝗿 𝗴𝗿𝗼𝘂𝗽𝘀 ➕", url=f"https://t.me/{bot_username}?startgroup=true")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
