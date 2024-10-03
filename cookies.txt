@@ -23,7 +23,7 @@
 .youtube.com	TRUE	/	TRUE	1759149219	__Secure-1PSIDCC	AKEyXzWo11YguFbwDwDrInhyxNMKOkFSiE9umxp-ICvaULIpd9UA1OUK555paFzIkEe5i2lIqg
 .youtube.com	TRUE	/	TRUE	1759149219	__Secure-3PSIDCC	AKEyXzXwtDIOzr56s6VlEJuKyZtnr0geuA1n--xSYocXHN1gA7LDCKRPhcM0C-3iO99WZXfU
 .youtube.com	TRUE	/	FALSE	1727613228	ST-bzxzc6	csn=fuqffeZledorx1Ed&itct=CLcBEPxaIhMIkMaV25ToiAMVJulMAh3LSSaAMgpnLWhpZ2gtcmVjWg9GRXdoYXRfdG9fd2F0Y2iaAQYQjh4YngE%3D
-instagram.com	TRUE	/	TRUE	1762173291	mid	ZvlJagABAAGw-dfijK9dT9DsMV3c
+.instagram.com	TRUE	/	TRUE	1762173291	mid	ZvlJagABAAGw-dfijK9dT9DsMV3c
 .instagram.com	TRUE	/	TRUE	1762173291	datr	akn5ZnMjtJVn6IRYgj15fakr
 .instagram.com	TRUE	/	TRUE	1759149294	ig_nrcb	1
 .instagram.com	TRUE	/	TRUE	1759149395	ig_did	F23ED838-1118-44F5-8A2A-DECFF8DDA9C6
