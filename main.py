@@ -28,8 +28,8 @@ def start(update: Update, context: CallbackContext) -> None:
     
     keyboard = [
         [
-            InlineKeyboardButton("Join Channel", url="https://t.me/alcyonebots"),
-            InlineKeyboardButton("Join Support", url="https://t.me/alcyone_support")
+            InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
+            InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
         ],
         [
             InlineKeyboardButton("Add me to your groups ➕", url=f"https://t.me/{bot_username}?startgroup=true")
@@ -47,7 +47,7 @@ def start(update: Update, context: CallbackContext) -> None:
             "Welcome to 𝗩𝗶𝗱𝗲𝗼 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗲𝗿 𝗕𝗼𝘁 𝗯𝘆 𝗔𝗹𝗰𝘆𝗼𝗻𝗲, your go-to bot for downloading high-quality content from YouTube and Instagram!! 🎬\n"
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
             "◎ Start a chat with @AlcDownloaderBot and send /start\n"
-            "◎ Add me to your group and send /start then send the link directly!\n\n"
+            "◎ Works fine in Public group chats!! \nIn private group chats send /start@AlcyoneDownloaderbot then send link by replying to my message!!\n\n"
             "Join our channel and support group to use the bot\n\n"
             "Let's Get Started 👾"
         ),
@@ -66,8 +66,20 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     if is_valid_url(url):
         try:
             file_path = download_video(url)  # Download the video
+
+            # Define the inline buttons
+            keyboard = [
+                [
+                    InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀 ", url="https://t.me/alcyonebots"),
+                    InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 ", url="https://t.me/alcyone_support")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            # Send the video with inline buttons
             with open(file_path, 'rb') as video_file:
-                update.message.reply_video(video_file)  # Send video directly without caption
+                update.message.reply_video(video_file, reply_markup=reply_markup)
+            
             os.remove(file_path)  # Remove the file after sending
         except Exception as e:
             update.message.reply_text(f'Error: {str(e)}')
