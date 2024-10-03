@@ -25,9 +25,9 @@ def download_video(url) -> str:
         return ydl.prepare_filename(video_info)  # Return the downloaded file path
 
 # Define the command handler for the bot
-    def start(update: Update, context: CallbackContext) -> None:
-        bot_username = context.bot.get_me().username  # Get the bot's username
-        keyboard = [
+def start(update: Update, context: CallbackContext) -> None:
+    bot_username = context.bot.get_me().username  # Get the bot's username
+    keyboard = [
         [
             InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
             InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
@@ -72,8 +72,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             # Define the inline buttons
             keyboard = [
                 [
-                    InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀 ", url="https://t.me/alcyonebots"),
-                    InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 ", url="https://t.me/alcyone_support")
+                    InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
+                    InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -97,15 +97,16 @@ def main() -> None:
     updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U")  # Your bot token
 
     dispatcher = updater.dispatcher
+
+    # Register the /start command handler
     dispatcher.add_handler(CommandHandler("start", start))
+
+    # Register a message handler for incoming messages
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
+    # Start the Bot
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
-    # Create the downloads directory if it doesn't exist
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
-    
     main()
