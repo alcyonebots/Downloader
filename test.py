@@ -29,11 +29,11 @@ def start(update: Update, context: CallbackContext) -> None:
     bot_username = context.bot.get_me().username  # Get the bot's username
     keyboard = [
         [
-            InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
-            InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
+            InlineKeyboardButton("𝖡𝗈𝗍 𝖴𝗉𝖽𝖺𝗍𝖾𝗌", url="https://t.me/alcyonebots"),
+            InlineKeyboardButton("𝖡𝗈𝗍 𝖲𝗎𝗉𝗉𝗈𝗋𝗍", url="https://t.me/alcyone_support")
         ],
         [
-            InlineKeyboardButton("𝗔𝗱𝗱 𝗺𝗲 𝘁𝗼 𝘆𝗼𝘂𝗿 𝗴𝗿𝗼𝘂𝗽𝘀 ➕", url=f"https://t.me/{bot_username}?startgroup=true")
+            InlineKeyboardButton("𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉𝗌 ➕", url=f"https://t.me/{bot_username}?startgroup=true")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -70,8 +70,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             # Define the inline buttons
             keyboard = [
                 [
-                    InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
-                    InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
+                    InlineKeyboardButton("𝖡𝗈𝗍 𝖴𝗉𝖽𝖺𝗍𝖾𝗌", url="https://t.me/alcyonebots"),
+                    InlineKeyboardButton("𝖡𝗈𝗍 𝖲𝗎𝗉𝗉𝗈𝗋𝗍", url="https://t.me/alcyone_support")
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
