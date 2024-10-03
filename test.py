@@ -25,10 +25,9 @@ def download_video(url) -> str:
         return ydl.prepare_filename(video_info)  # Return the downloaded file path
 
 # Define the command handler for the bot
-def start(update: Update, context: CallbackContext) -> None:
-    bot_username = context.bot.get_me().username  # Get the bot's username
-    
-    keyboard = [
+    def start(update: Update, context: CallbackContext) -> None:
+        bot_username = context.bot.get_me().username  # Get the bot's username
+        keyboard = [
         [
             InlineKeyboardButton("𝗕𝗼𝘁 𝗨𝗽𝗱𝗮𝘁𝗲𝘀", url="https://t.me/alcyonebots"),
             InlineKeyboardButton("𝗕𝗼𝘁 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url="https://t.me/alcyone_support")
@@ -42,7 +41,7 @@ def start(update: Update, context: CallbackContext) -> None:
     image_url = "https://i.imghippo.com/files/OTItE1727595318.jpg"
     
     # Send the image with the caption
-update.message.reply_photo(
+    update.message.reply_photo(
         photo=image_url,
         caption=(
             "𝗛𝗶 𝘁𝗵𝗲𝗿𝗲 👋🏻\n"
@@ -50,8 +49,8 @@ update.message.reply_photo(
             "𝗛𝗼𝘄 𝗱𝗼𝗲𝘀 𝗶𝘁 𝘄𝗼𝗿𝗸?\n"
             "◎ 𝖲𝗍𝖺𝗋𝗍 𝖺 𝖼𝗁𝖺𝗍 𝗐𝗂𝗍𝗁 @AlcDownloaderbot 𝖺𝗇𝖽 𝗌𝖾𝗇𝖽 /start\n"
             "◎ 𝖶𝗈𝗋𝗄𝗌 𝖿𝗂𝗇𝖾 𝗂𝗇 𝖯𝗎𝖻𝗅𝗂𝖼 𝗀𝗋𝗈𝗎𝗉 𝖼𝗁𝖺𝗍𝗌!! \n𝖨𝗇 𝗉𝗋𝗂𝗏𝖺𝗍𝖾 𝗀𝗋𝗈𝗎𝗉 𝖼𝗁𝖺𝗍𝗌 𝗌𝖾𝗇𝖽 /Start 𝗍𝗁𝖾𝗇 𝗌𝖾𝗇𝖽 𝗅𝗂𝗇𝗄 𝖻𝗒 𝗋𝖾𝗉𝗅𝗒𝗂𝗇𝗀 𝗍𝗈 𝗆𝗒 𝗆𝖾𝗌𝗌𝖺𝗀𝖾!!\n\n"
-            "𝖩𝗈𝗂𝗇 𝗈𝗎𝗋 𝖼𝗁𝖺𝗇𝗇𝖾𝗅 𝖺𝗇𝖽 𝗌𝗎𝗉𝗉𝗈𝗋𝗍 𝗀𝗋𝗈𝗎𝗉 𝗍𝗈 𝗎𝗌𝖾 𝗍𝗁𝖾 𝖻𝗈𝗍\n"
-            "For any queries, hit at: @Cenzeo \n\n"
+            "𝖩𝗈𝗂𝗇 𝗈𝗎𝗋 𝖼𝗁𝖺𝗇𝗇𝖾𝗅 𝖺𝗇𝖽 𝗌𝗎𝗉𝗉𝗈𝗋𝗍 𝗀𝗋𝗈𝗎𝗉 𝗍𝗈 𝗎𝗌𝖾 𝗍𝗁𝖾 𝖻𝗈𝗍
+            f"𝖥𝗈𝗋 𝖺𝗇𝗒 𝗊𝗎𝖾𝗋𝗂𝖾𝗌, 𝖧𝗂𝗍 𝖺𝗍 : @CENZEO \n\n"
             "𝖫𝖾𝗍'𝗌 𝖦𝖾𝗍 𝖲𝗍𝖺𝗋𝗍𝖾𝖽 👾"
         ),
         reply_markup=reply_markup
