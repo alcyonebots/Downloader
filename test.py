@@ -7,7 +7,7 @@ import logging
 from telegram.utils.helpers import mention_html
 import pymongo
 
-LOGS_GROUP_ID = -1002246146947
+LOGS_GROUP_ID = -1002183841044
 OWNER_ID = 6663845789
 
 mongo_url = "mongodb+srv://Cenzo:Cenzo123@cenzo.azbk1.mongodb.net/"
