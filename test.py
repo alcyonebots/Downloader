@@ -10,7 +10,7 @@ import pymongo
 LOGS_GROUP_ID = -1002246146947
 OWNER_ID = 6663845789
 
-mongo_url = "mongodb+srv://cenzeo:VoidGod@123@cenzo.azbk1.mongodb.net/"
+mongo_url = "mongodb+srv://Cenzo:Cenzo123@cenzo.azbk1.mongodb.net/"
 client = pymongo.MongoClient(mongo_url)
 db = client['cenzo_db']
 users_collection = db['users']
