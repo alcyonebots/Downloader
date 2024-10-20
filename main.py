@@ -6,7 +6,7 @@ import re
 import logging
 from telegram.utils.helpers import mention_html
 
-LOGS_GROUP_ID = -1002246146947
+LOGS_GROUP_ID = -1002183841044
 OWNER_ID = 6663845789
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
