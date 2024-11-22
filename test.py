@@ -142,14 +142,14 @@ def is_valid_url(text: str) -> bool:
         r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/.+')
 
     instagram_pattern = re.compile(
-        r'(https?://)?(www\.)?(instagram)\.com/.+')
+        r'(https?://)?(www\.)?(instagram)\.com/(p|reel|tv)/.+')
 
     return bool(youtube_pattern.match(text) or instagram_pattern.match(text))
 
 
 def error(update: Update, context: CallbackContext) -> None:
     logger.warning(f'Update {update} caused error {context.error}')
-
+  
 
 def broadcast(update: Update, context: CallbackContext) -> None:
     if update.message.from_user.id != OWNER_ID:
