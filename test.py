@@ -7,7 +7,7 @@ import logging
 from telegram.utils.helpers import mention_html
 import pymongo
 
-LOGS_GROUP_ID = -1002183841044
+LOGS_GROUP_ID = -1002854086015
 OWNER_ID = 6663845789
 
 mongo_url = "mongodb+srv://Cenzo:Cenzo123@cenzo.azbk1.mongodb.net/"
@@ -175,7 +175,7 @@ def broadcast(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    updater = Updater("7488772903:AAGP-ZvbH7K2XzYG9vv-jIsA12iRxTeya3U", use_context=True)
+    updater = Updater("7887377098:AAGPD37rvqymDGiv3R2xXXvqL4p70GxnWB8", use_context=True)
 
     dispatcher = updater.dispatcher
 
